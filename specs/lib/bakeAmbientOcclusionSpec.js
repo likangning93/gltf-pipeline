@@ -84,16 +84,14 @@ describe('bakeAmbientOcclusion', function() {
 
         var data = attributes.data;
 
-        for (var index in data) {
-            if (data.hasOwnProperty(index)) {
-                var values = attributeToArray(data[index]);
-                for (var i = 0; i < numberValues; i++) {
-                    if (values[i] > max[i] || values[i] < min[i]) {
-                        return false;
-                    }
-                    minInValues[i] = Math.min(minInValues[i], values[i]);
-                    maxInValues[i] = Math.max(maxInValues[i], values[i]);
+        for (var i = 0; i < data.length; i++) {
+            var values = attributeToArray(data[i]);
+            for (var j = 0; j < numberValues; j++) {
+                if (values[j] > max[j] || values[j] < min[j]) {
+                    return false;
                 }
+                minInValues[j] = Math.min(minInValues[j], values[j]);
+                maxInValues[j] = Math.max(maxInValues[j], values[j]);
             }
         }
         for (var i = 0; i < numberValues; i++) {
@@ -107,7 +105,7 @@ describe('bakeAmbientOcclusion', function() {
         return true;
     }
 
-    fit('reads all the attributes in an accessor correctly', function() {
+    it('reads all the attributes in an accessor correctly', function() {
         var testBoxGltf = clone(boxGltf);
         var accessorIDtoData = {};
         var accessorIDtoMinMax = {};

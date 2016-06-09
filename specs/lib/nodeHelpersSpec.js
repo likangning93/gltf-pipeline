@@ -1,7 +1,5 @@
 'use strict';
 var Cesium = require('cesium');
-var defined = Cesium.defined;
-var Cartesian3 = Cesium.Cartesian3;
 var Matrix4 = Cesium.Matrix4;
 var CesiumMath = Cesium.Math;
 var clone = require('clone');

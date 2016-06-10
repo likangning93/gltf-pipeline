@@ -186,7 +186,7 @@ describe('bakeAmbientOcclusion', function() {
         });
     });
 
-    it('correctly processes a basic 2-triangle square primitive', function() {
+    fit('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
             "rayDepth" : 0.1,
@@ -200,6 +200,22 @@ describe('bakeAmbientOcclusion', function() {
         expect(texelPoints.length <= 46).toEqual(true); // at worst, all pixels on triangle diagonals are double sampled
 
         // because of the uniform scale, expect triangles to be bigger
+        var triangle0 = triangleSoup[0];
+        var triangle1 = triangleSoup[1];
+
+        var point0 = new Cartesian3(0.0, 0.0, 0.0);
+        var point1 = new Cartesian3(0.0, 2.0, 0.0);
+        var point2 = new Cartesian3(2.0, 2.0, 0.0);
+        var point3 = new Cartesian3(2.0, 0.0, 0.0);
+        
+        expect(Cartesian3.equalsEpsilon(triangle0.positions[0], point0, CesiumMath.EPSILON7)).toEqual(true);
+        expect(Cartesian3.equalsEpsilon(triangle0.positions[1], point1, CesiumMath.EPSILON7)).toEqual(true);
+        expect(Cartesian3.equalsEpsilon(triangle0.positions[2], point2, CesiumMath.EPSILON7)).toEqual(true);
+
+        expect(Cartesian3.equalsEpsilon(triangle1.positions[0], point0, CesiumMath.EPSILON7)).toEqual(true);
+        expect(Cartesian3.equalsEpsilon(triangle1.positions[1], point2, CesiumMath.EPSILON7)).toEqual(true);
+        expect(Cartesian3.equalsEpsilon(triangle1.positions[2], point3, CesiumMath.EPSILON7)).toEqual(true);
+
     });
     
 });

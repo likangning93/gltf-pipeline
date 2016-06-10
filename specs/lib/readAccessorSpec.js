@@ -11,7 +11,6 @@ var path = require('path');
 var clone = require('clone');
 var loadGltfUris = require('../../lib/loadGltfUris');
 var addPipelineExtras = require('../../lib/addPipelineExtras');
-var bakeAmbientOcclusion = require('../../lib/bakeAmbientOcclusion');
 var readAccessor = require('../../lib/readAccessor');
 
 var gltfPath = './specs/data/boxTexturedUnoptimized/CesiumTexturedBoxTest.gltf';

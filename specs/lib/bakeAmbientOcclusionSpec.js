@@ -37,10 +37,10 @@ describe('bakeAmbientOcclusion', function() {
         0,0,1
     ];
     var uvs = [
-        0.2,0.2,
-        0.8,0.2,
-        0.8,0.8,
-        0.2,0.8
+        0.25,0.25,
+        0.75,0.25,
+        0.75,0.75,
+        0.25,0.75
     ];
     var positionsBuffer = new Buffer(positions.length * 4);
     for (var i = 0; i < positions.length; i++) {
@@ -103,13 +103,13 @@ describe('bakeAmbientOcclusion', function() {
             },
             "normal_view": {
                 "buffer": "buffer_0",
-                "byteOffset": 2 * 6 * 2,
+                "byteOffset": 6 * 2 + (4 * 3 * 4),
                 "byteLength": 4 * 3 * 4,
                 "target": 34962
             },
             "uv_view": {
                 "buffer": "buffer_0",
-                "byteOffset": 3 * 6 * 2,
+                "byteOffset": 6 * 2 + (4 * 3 * 4) * 2,
                 "byteLength": 4 * 2 * 4,
                 "target": 34962
             }
@@ -145,7 +145,10 @@ describe('bakeAmbientOcclusion', function() {
                 "meshes": [
                     "mesh_square"
                 ],
-                "name": "square"
+                "name": "square",
+                "extras": {
+                    "_pipeline": {}
+                }
             }
         },
         "meshes": {
@@ -183,13 +186,20 @@ describe('bakeAmbientOcclusion', function() {
         });
     });
 
-    it('correctly processes a basic 2-triangle square primitive', function() {
+    fit('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
             "rayDepth" : 0.1,
             "resolution" : 10
         }
-        var rayTracerScene = generateRaytracerScene(scene, testGltf, options);
+        var rayTracerScene = bakeAmbientOcclusion.generateRaytracerScene(scene, testGltf, options);
+        var triangleSoup = rayTracerScene.triangleSoup;
+        var texelPoints = rayTracerScene.texelPoints;
+        expect(triangleSoup.length).toEqual(2);
+        expect(texelPoints.length >= 36).toEqual(true); // barycentric coordinate precisions make this imprecise
+        expect(texelPoints.length <= 46).toEqual(true); // at worst, all pixels on triangle diagonals are double sampled
+
+        // because of the uniform scale, expect triangles to be bigger
     });
     
 });

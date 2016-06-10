@@ -186,7 +186,7 @@ describe('bakeAmbientOcclusion', function() {
         });
     });
 
-    fit('correctly processes a basic 2-triangle square primitive', function() {
+    it('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
             "rayDepth" : 0.1,

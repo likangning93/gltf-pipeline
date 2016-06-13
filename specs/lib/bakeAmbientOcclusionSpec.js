@@ -186,29 +186,93 @@ describe('bakeAmbientOcclusion', function() {
         });
     });
 
+    function testContainmentAndFitCartesian3(min, max, cartesian3s) {
+        // check if the data in values is bounded by min and max precisely
+        var minInValues = Array(min.length).fill(Number.POSITIVE_INFINITY);
+        var maxInValues = Array(max.length).fill(Number.NEGATIVE_INFINITY);
+
+        var data = cartesian3s;
+
+        for (var i = 0; i < data.length; i++) {
+            var values = [data[i].x, data[i].y, data[i].z];
+            for (var j = 0; j < min.length; j++) {
+                if (values[j] > max[j] || values[j] < min[j]) {
+                    return false;
+                }
+                minInValues[j] = Math.min(minInValues[j], values[j]);
+                maxInValues[j] = Math.max(maxInValues[j], values[j]);
+            }
+        }
+        for (var i = 0; i < min.length; i++) {
+            if (!CesiumMath.equalsEpsilon(minInValues[i], min[i], CesiumMath.EPSILON7)) {
+                return false;
+            }
+            if (!CesiumMath.equalsEpsilon(maxInValues[i], max[i], CesiumMath.EPSILON7)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
     fit('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
             "rayDepth" : 0.1,
             "resolution" : 10
-        }
+        };
         var rayTracerScene = bakeAmbientOcclusion.generateRaytracerScene(scene, testGltf, options);
         var triangleSoup = rayTracerScene.triangleSoup;
         var texelPoints = rayTracerScene.texelPoints;
-        expect(triangleSoup.length).toEqual(2);
-        expect(texelPoints.length >= 36).toEqual(true); // barycentric coordinate precisions make this imprecise
-        expect(texelPoints.length <= 46).toEqual(true); // at worst, all pixels on triangle diagonals are double sampled
 
         // because of the uniform scale, expect triangles to be bigger
-        var triangle0 = triangleSoup[0];
-        var triangle1 = triangleSoup[1];
-
         var point0 = new Cartesian3(0.0, 0.0, 0.0);
         var point1 = new Cartesian3(0.0, 2.0, 0.0);
         var point2 = new Cartesian3(2.0, 2.0, 0.0);
         var point3 = new Cartesian3(2.0, 0.0, 0.0);
         var normal = new Cartesian3(0.0, 0.0, 1.0);
-        
+
+        var expectedPixelIndices = {
+            22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0,
+            32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0,
+            42: 0, 43: 0, 44: 0, 45: 0, 46: 0, 47: 0,
+            52: 0, 53: 0, 54: 0, 55: 0, 56: 0, 57: 0,
+            62: 0, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0,
+            72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0
+        }
+
+        ////////// check texel points //////////
+        expect(texelPoints.length >= 36).toEqual(true); // barycentric coordinate precisions make this imprecise
+        expect(texelPoints.length <= 46).toEqual(true); // at most, all pixels on triangle diagonals are double sampled
+
+        // each texel point has a world position, world normal, pixel index, and buffer pointer
+        var cartesian3s = [];
+        for (var i = 0; i < texelPoints.length; i++) {
+            var texelPoint = texelPoints[i];
+            expect(Cartesian3.equalsEpsilon(texelPoint.normal, normal, CesiumMath.EPSILON7)).toEqual(true);
+            expect(texelPoint.buffer.resolution).toEqual(10);
+            expect(texelPoint.buffer.samples.length).toEqual(100);
+            expect(expectedPixelIndices.hasOwnProperty(texelPoint.index)).toEqual(true);
+            if (expectedPixelIndices.hasOwnProperty(texelPoint.index)) {
+                expectedPixelIndices[texelPoint.index]++;
+            }
+            cartesian3s.push(texelPoint.position);
+        }
+        expect(testContainmentAndFitCartesian3([0.0, 0.0, 0.0], [2.0, 2.0, 0.0], cartesian3s)).toEqual(true);
+        for (var id in expectedPixelIndices) {
+            if (expectedPixelIndices.hasOwnProperty(id)) {
+                expect(expectedPixelIndices[id] > 0).toEqual(true);
+            }
+        }
+
+        ////////// check triangle soup //////////
+
+        expect(triangleSoup.length).toEqual(2);
+
+        var triangle0 = triangleSoup[0];
+        var triangle1 = triangleSoup[1];
+
         expect(Cartesian3.equalsEpsilon(triangle0.positions[0], point0, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle0.positions[1], point1, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle0.positions[2], point2, CesiumMath.EPSILON7)).toEqual(true);

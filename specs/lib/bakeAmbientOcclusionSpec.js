@@ -214,9 +214,7 @@ describe('bakeAmbientOcclusion', function() {
         return true;
     }
 
-
-
-    fit('correctly processes a basic 2-triangle square primitive', function() {
+    it('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
             "rayDepth" : 0.1,
@@ -240,7 +238,7 @@ describe('bakeAmbientOcclusion', function() {
             52: 0, 53: 0, 54: 0, 55: 0, 56: 0, 57: 0,
             62: 0, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0,
             72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0
-        }
+        };
 
         ////////// check texel points //////////
         expect(texelPoints.length >= 36).toEqual(true); // barycentric coordinate precisions make this imprecise
@@ -276,13 +274,67 @@ describe('bakeAmbientOcclusion', function() {
         expect(Cartesian3.equalsEpsilon(triangle0.positions[0], point0, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle0.positions[1], point1, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle0.positions[2], point2, CesiumMath.EPSILON7)).toEqual(true);
-        expect(Cartesian3.equalsEpsilon(triangle0.normal, normal, CesiumMath.EPSILON7)).toEqual(true);
 
         expect(Cartesian3.equalsEpsilon(triangle1.positions[0], point0, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle1.positions[1], point2, CesiumMath.EPSILON7)).toEqual(true);
         expect(Cartesian3.equalsEpsilon(triangle1.positions[2], point3, CesiumMath.EPSILON7)).toEqual(true);
-        expect(Cartesian3.equalsEpsilon(triangle0.normal, normal, CesiumMath.EPSILON7)).toEqual(true);
-
     });
-    
+
+    fit('generates "all occluded (1.0)" for samples inside a closed unit tetrahedron', function() {
+        var sqrt3 = Math.sqrt(3.0);
+        var bigRadius = sqrt3 / 6.0;
+        var smallRadius = (sqrt3 / 2.0) - bigRadius;
+        var point0 = new Cartesian3(0.0, bigRadius, 0.0);
+        var point1 = new Cartesian3(0.5, 0.0, -smallRadius);
+        var point2 = new Cartesian3(-0.5, 0.0, -smallRadius);
+        var point3 = new Cartesian3(0.0, sqrt3 / 2.0, 0.0);
+
+        var normals = [];
+        for (var i = 0; i < 6; i++) {
+            var values = [0.0, 0.0, 0.0];
+            values[i % 3] = (i % 2) ? 1.0 : -1.0;
+            var newNormal = Cartesian3.fromArray(values);
+            normals.push(newNormal);
+        }
+
+        var triangleSoup = [
+            {positions: [point0, point1, point2]},
+            {positions: [point0, point1, point3]},
+            {positions: [point1, point2, point3]},
+            {positions: [point2, point0, point3]}
+        ];
+
+        var aoBuffer = {
+            resolution: 3,
+            samples: new Array(9).fill(0.0),
+            count: new Array(9).fill(0.0)
+        };
+
+        var texelPoints = [];
+
+        for (i = 0; i < normals.length; i++) {
+            texelPoints.push({
+                position: Cartesian3.ZERO,
+                normal: normals[i],
+                index: i,
+                buffer: aoBuffer
+            });
+        }
+
+        var raytracerScene = {
+            numberSamples : 16,
+            rayDepth : 10.0,
+            triangleSoup : triangleSoup,
+            texelPoints : texelPoints
+        };
+
+        bakeAmbientOcclusion.generateOcclusionData(raytracerScene);
+
+        var samples = aoBuffer.samples;
+        var counts = aoBuffer.count;
+        for (i = 0; i < 6; i++) {
+            expect(samples[i]).toEqual(16.0);
+            expect(counts[i]).toEqual(16);
+        }
+    });
 });

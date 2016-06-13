@@ -168,6 +168,8 @@ describe('bakeAmbientOcclusion', function() {
         }
     };
 
+
+
     beforeAll(function(done) {
         fs.readFile(gltfPath, function(err, data) {
             if (err) {
@@ -185,6 +187,19 @@ describe('bakeAmbientOcclusion', function() {
             }
         });
     });
+
+    // tetrahedron
+    var point0 = new Cartesian3(0.0, -1.0, 1.0);
+    var point1 = new Cartesian3(1.0, -1.0, -1.0);
+    var point2 = new Cartesian3(-1.0, -1.0, -1.0);
+    var point3 = new Cartesian3(0.0, 1.0, 0.0);
+
+    var tetrahedron = [
+        {positions: [point0, point1, point2]},
+        {positions: [point0, point1, point3]},
+        {positions: [point1, point2, point3]},
+        {positions: [point2, point0, point3]}
+    ];
 
     function testContainmentAndFitCartesian3(min, max, cartesian3s) {
         // check if the data in values is bounded by min and max precisely
@@ -280,12 +295,7 @@ describe('bakeAmbientOcclusion', function() {
         expect(Cartesian3.equalsEpsilon(triangle1.positions[2], point3, CesiumMath.EPSILON7)).toEqual(true);
     });
 
-    fit('generates "all occluded (1.0)" for samples inside a closed tetrahedron', function() {
-        var point0 = new Cartesian3(0.0, -1.0, 1.0);
-        var point1 = new Cartesian3(1.0, -1.0, -1.0);
-        var point2 = new Cartesian3(-1.0, -1.0, -1.0);
-        var point3 = new Cartesian3(0.0, 1.0, 0.0);
-
+    it('generates "all occluded (1.0)" for samples inside a closed tetrahedron', function() {
         var normals = [];
         for (var i = 0; i < 6; i++) {
             var values = [0.0, 0.0, 0.0];
@@ -293,13 +303,6 @@ describe('bakeAmbientOcclusion', function() {
             var newNormal = Cartesian3.fromArray(values);
             normals.push(newNormal);
         }
-
-        var triangleSoup = [
-            {positions: [point0, point1, point2]},
-            {positions: [point0, point1, point3]},
-            {positions: [point1, point2, point3]},
-            {positions: [point2, point0, point3]}
-        ];
 
         var aoBuffer = {
             resolution: 3,
@@ -321,7 +324,7 @@ describe('bakeAmbientOcclusion', function() {
         var raytracerScene = {
             numberSamples : 16,
             rayDepth : 10.0,
-            triangleSoup : triangleSoup,
+            triangleSoup : tetrahedron,
             texelPoints : texelPoints
         };
 
@@ -333,5 +336,53 @@ describe('bakeAmbientOcclusion', function() {
             expect(samples[i]).toEqual(16.0);
             expect(counts[i]).toEqual(16);
         }
+    });
+
+    fit('generates various levels of occlusion for samples in the mouth of an open tetrahedron', function() {
+        var openTetrahedron = [tetrahedron[1], tetrahedron[2], tetrahedron[3]];
+
+        var aoBuffer = {
+            resolution: 2,
+            samples: new Array(4).fill(0.0),
+            count: new Array(4).fill(0.0)
+        };
+
+        var bottomCenter = new Cartesian3(0.0, -1.0, 0.0);
+
+        var texelPoints = [
+            {
+                position: bottomCenter,
+                normal: new Cartesian3(0.0, 1.0, 0.0),
+                index: 0,
+                buffer: aoBuffer
+            },
+            {
+                position: bottomCenter,
+                normal: new Cartesian3(0.0, -1.0, 0.0),
+                index: 1,
+                buffer: aoBuffer
+            },
+            {
+                position: bottomCenter,
+                normal: new Cartesian3(1.0, 0.0, 0.0),
+                index: 2,
+                buffer: aoBuffer
+            }
+        ];
+
+        var raytracerScene = {
+            numberSamples : 16,
+            rayDepth : 10.0,
+            triangleSoup : openTetrahedron,
+            texelPoints : texelPoints
+        };
+
+        bakeAmbientOcclusion.generateOcclusionData(raytracerScene);
+
+        var samples = aoBuffer.samples;
+
+        expect(samples[0]).toEqual(16);
+        expect(samples[1]).toEqual(0);
+        expect(samples[2] > 4 && samples[2] < 12).toEqual(true); // somewhat randomized
     });
 });

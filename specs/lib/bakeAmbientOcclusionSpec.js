@@ -280,14 +280,11 @@ describe('bakeAmbientOcclusion', function() {
         expect(Cartesian3.equalsEpsilon(triangle1.positions[2], point3, CesiumMath.EPSILON7)).toEqual(true);
     });
 
-    fit('generates "all occluded (1.0)" for samples inside a closed unit tetrahedron', function() {
-        var sqrt3 = Math.sqrt(3.0);
-        var bigRadius = sqrt3 / 6.0;
-        var smallRadius = (sqrt3 / 2.0) - bigRadius;
-        var point0 = new Cartesian3(0.0, bigRadius, 0.0);
-        var point1 = new Cartesian3(0.5, 0.0, -smallRadius);
-        var point2 = new Cartesian3(-0.5, 0.0, -smallRadius);
-        var point3 = new Cartesian3(0.0, sqrt3 / 2.0, 0.0);
+    fit('generates "all occluded (1.0)" for samples inside a closed tetrahedron', function() {
+        var point0 = new Cartesian3(0.0, -1.0, 1.0);
+        var point1 = new Cartesian3(1.0, -1.0, -1.0);
+        var point2 = new Cartesian3(-1.0, -1.0, -1.0);
+        var point3 = new Cartesian3(0.0, 1.0, 0.0);
 
         var normals = [];
         for (var i = 0; i < 6; i++) {

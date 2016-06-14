@@ -14,10 +14,12 @@ var addPipelineExtras = require('../../lib/addPipelineExtras');
 var bakeAmbientOcclusion = require('../../lib/bakeAmbientOcclusion');
 var readAccessor = require('../../lib/readAccessor');
 
-var gltfPath = './specs/data/boxTexturedUnoptimized/CesiumTexturedBoxTest.gltf';
+var boxGltfPath = './specs/data/boxTexturedUnoptimized/CesiumTexturedBoxTest.gltf';
+var boxOverGroundGltfPath = './specs/data/ambientOcclusion/cube_over_ground.gltf';
 
 describe('bakeAmbientOcclusion', function() {
     var boxGltf;
+    var boxOverGroundGltf;
 
     var indices = [0,1,2,0,2,3];
     var indicesBuffer = new Buffer(indices.length * 2);
@@ -43,15 +45,15 @@ describe('bakeAmbientOcclusion', function() {
         0.25,0.75
     ];
     var positionsBuffer = new Buffer(positions.length * 4);
-    for (var i = 0; i < positions.length; i++) {
+    for (i = 0; i < positions.length; i++) {
         positionsBuffer.writeFloatLE(positions[i], i * 4);
     }
     var normalsBuffer = new Buffer(normals.length * 4);
-    for (var i = 0; i < normals.length; i++) {
+    for (i = 0; i < normals.length; i++) {
         normalsBuffer.writeFloatLE(normals[i], i * 4);
     }
     var uvsBuffer = new Buffer(uvs.length * 4);
-    for (var i = 0; i < uvs.length; i++) {
+    for (i = 0; i < uvs.length; i++) {
         uvsBuffer.writeFloatLE(uvs[i], i * 4);
     }
 
@@ -171,14 +173,30 @@ describe('bakeAmbientOcclusion', function() {
 
 
     beforeAll(function(done) {
-        fs.readFile(gltfPath, function(err, data) {
+        fs.readFile(boxGltfPath, function(err, data) {
             if (err) {
                 throw err;
             }
             else {
                 boxGltf = JSON.parse(data);
                 addPipelineExtras(boxGltf);
-                loadGltfUris(boxGltf, path.dirname(gltfPath), function(err, gltf) {
+                loadGltfUris(boxGltf, path.dirname(boxGltfPath), function(err, gltf) {
+                    if (err) {
+                        throw err;
+                    }
+                    done();
+                });
+            }
+        });
+
+        fs.readFile(boxOverGroundGltfPath, function(err, data) {
+            if (err) {
+                throw err;
+            }
+            else {
+                boxOverGroundGltf = JSON.parse(data);
+                addPipelineExtras(boxOverGroundGltf);
+                loadGltfUris(boxOverGroundGltf, path.dirname(boxGltfPath), function(err, gltf) {
                     if (err) {
                         throw err;
                     }
@@ -383,6 +401,21 @@ describe('bakeAmbientOcclusion', function() {
 
         expect(samples[0]).toEqual(16);
         expect(samples[1]).toEqual(0);
-        expect(samples[2] > 4 && samples[2] < 12).toEqual(true); // somewhat randomized
+        expect(samples[2] > 6 && samples[2] < 10).toEqual(true); // randomized, but stratification should ensure this.
     });
+
+    fit('generates new images, textures, and materials with a new sampler', function() {
+        var boxOverGroundGltfClone = clone(boxOverGroundGltf);
+        var options = {
+            numberSamples: 16,
+            rayDepth: 1.0,
+            resolution: 16
+        };
+        bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
+
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(4);
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(4);
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(4);
+        expect(Object.keys(boxOverGroundGltfClone.samplers).length).toEqual(2);
+    })
 });

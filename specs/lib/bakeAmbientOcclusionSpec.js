@@ -203,8 +203,8 @@ describe('bakeAmbientOcclusion', function() {
 
     function testContainmentAndFitCartesian3(min, max, cartesian3s) {
         // check if the data in values is bounded by min and max precisely
-        var minInValues = Array(min.length).fill(Number.POSITIVE_INFINITY);
-        var maxInValues = Array(max.length).fill(Number.NEGATIVE_INFINITY);
+        var minInValues = new Array(min.length).fill(Number.POSITIVE_INFINITY);
+        var maxInValues = new Array(max.length).fill(Number.NEGATIVE_INFINITY);
 
         var data = cartesian3s;
 
@@ -218,7 +218,7 @@ describe('bakeAmbientOcclusion', function() {
                 maxInValues[j] = Math.max(maxInValues[j], values[j]);
             }
         }
-        for (var i = 0; i < min.length; i++) {
+        for (i = 0; i < min.length; i++) {
             if (!CesiumMath.equalsEpsilon(minInValues[i], min[i], CesiumMath.EPSILON7)) {
                 return false;
             }
@@ -235,9 +235,9 @@ describe('bakeAmbientOcclusion', function() {
             "rayDepth" : 0.1,
             "resolution" : 10
         };
-        var rayTracerScene = bakeAmbientOcclusion.generateRaytracerScene(scene, testGltf, options);
-        var triangleSoup = rayTracerScene.triangleSoup;
-        var texelPoints = rayTracerScene.texelPoints;
+        var raytracerScene = bakeAmbientOcclusion.generateRaytracerScene(scene, testGltf, options);
+        var triangleSoup = raytracerScene.triangleSoup;
+        var texelPoints = raytracerScene.texelPoints;
 
         // because of the uniform scale, expect triangles to be bigger
         var point0 = new Cartesian3(0.0, 0.0, 0.0);
@@ -338,7 +338,7 @@ describe('bakeAmbientOcclusion', function() {
         }
     });
 
-    fit('generates various levels of occlusion for samples in the mouth of an open tetrahedron', function() {
+    it('generates various levels of occlusion for samples in the mouth of an open tetrahedron', function() {
         var openTetrahedron = [tetrahedron[1], tetrahedron[2], tetrahedron[3]];
 
         var aoBuffer = {

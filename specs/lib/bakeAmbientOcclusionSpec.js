@@ -343,7 +343,8 @@ describe('bakeAmbientOcclusion', function() {
             numberSamples : 16,
             rayDepth : 10.0,
             triangleSoup : tetrahedron,
-            texelPoints : texelPoints
+            texelPoints : texelPoints,
+            nearCull: 0.001
         };
 
         bakeAmbientOcclusion.generateOcclusionData(raytracerScene);
@@ -392,7 +393,8 @@ describe('bakeAmbientOcclusion', function() {
             numberSamples : 16,
             rayDepth : 10.0,
             triangleSoup : openTetrahedron,
-            texelPoints : texelPoints
+            texelPoints : texelPoints,
+            nearCull: 0.001
         };
 
         bakeAmbientOcclusion.generateOcclusionData(raytracerScene);

@@ -21,6 +21,7 @@ if (process.argv.length < 3 || defined(argv.h) || defined(argv.help)) {
         '  --ao_separate, bake ambient occlusion into a separate texture and modify the shader to use it.\n' +
         '  --ao_scene, specify which scene to bake AO for.\n' +
         '  --ao_rayDepth, ray distance for raytraced ambient occlusion.\n' +
+        '  --ao_resolution, resolution along one dimension for each AO texture.\n' +
         '  --ao_samples, sample count for ambient occlusion\n';
     process.stdout.write(help);
     return;
@@ -40,6 +41,7 @@ var quantize = defaultValue(argv.q, defaultValue(argv.quantize, false));
 var ao_diffuse = defaultValue(argv.ao_diffuse, false);
 var ao_scene = argv.ao_scene;
 var ao_rayDepth = defaultValue(argv.ao_rayDepth, 1.0);
+var ao_resolution = defaultValue(argv.ao_resolution, 128);
 var ao_samples = defaultValue(argv.ao_samples, 16);
 
 if (!defined(gltfPath)) {
@@ -63,6 +65,7 @@ var options = {
     ao_diffuse : ao_diffuse,
     ao_scene : ao_scene,
     ao_rayDepth : ao_rayDepth,
+    ao_resolution : ao_resolution,
     ao_samples : ao_samples
 };
 

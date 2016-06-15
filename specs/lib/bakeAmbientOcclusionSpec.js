@@ -404,7 +404,7 @@ describe('bakeAmbientOcclusion', function() {
         expect(samples[2] > 6 && samples[2] < 10).toEqual(true); // randomized, but stratification should ensure this.
     });
 
-    fit('generates new images, textures, and materials with a new sampler', function() {
+    it('generates new images, textures, and materials with a new sampler', function() {
         var boxOverGroundGltfClone = clone(boxOverGroundGltf);
         var options = {
             numberSamples: 16,

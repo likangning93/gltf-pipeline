@@ -253,7 +253,7 @@ describe('bakeAmbientOcclusion', function() {
             "rayDepth" : 0.1,
             "resolution" : 10
         };
-        var raytracerScene = bakeAmbientOcclusion.generateRaytracerScene(scene, testGltf, options);
+        var raytracerScene = bakeAmbientOcclusion.generateRaytracerScene(testGltf, scene, options);
         var triangleSoup = raytracerScene.triangleSoup;
         var texelPoints = raytracerScene.texelPoints;
 

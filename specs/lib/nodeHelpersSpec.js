@@ -189,7 +189,7 @@ describe('NodeHelpers', function() {
                 parameters.materialIDs.push(primitive.material);
             };
 
-            NodeHelpers.forEachPrimitive(gltf, functionParameters, countPrimitives);
+            NodeHelpers.forEachPrimitive(gltf, countPrimitives, functionParameters);
 
             expect(functionParameters.numberPrimitives).toEqual(5);
             expect(functionParameters.primitiveMeshIDs[0]).toEqual('meshTest_0');

@@ -11,6 +11,7 @@ var addPipelineExtras = require('../../lib/addPipelineExtras');
 var bakeAmbientOcclusion = require('../../lib/bakeAmbientOcclusion');
 var readAccessor = require('../../lib/readAccessor');
 var Jimp = require('jimp');
+var NodeHelpers = require('../../lib/NodeHelpers');
 
 var boxGltfPath = './specs/data/boxTexturedUnoptimized/CesiumTexturedBoxTest.gltf';
 var boxOverGroundGltfPath = './specs/data/ambientOcclusion/cube_over_ground.gltf';
@@ -508,17 +509,11 @@ describe('bakeAmbientOcclusion', function() {
         boxOverGroundGltfClone.materials[materialID] = material;
 
         var meshes = boxOverGroundGltfClone.meshes;
-        for (var meshID in meshes) {
-            if (meshes.hasOwnProperty(meshID)) {
-                var primitives = meshes[meshID].primitives;
-                for (var primitiveID in primitives) {
-                    if (primitives.hasOwnProperty(primitiveID)) {
-                        var primitive = primitives[primitiveID];
-                        primitive.material = materialID;
-                    }
-                }
-            }
-        }
+        var setPrimitiveMaterial = function(primitive) {
+            primitive.material = materialID;
+        };
+
+        NodeHelpers.forEachPrimitive(boxOverGroundGltfClone, setPrimitiveMaterial);
 
         var options = {
             numberSamples: 1,

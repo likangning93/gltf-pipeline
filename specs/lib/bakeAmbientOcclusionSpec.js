@@ -1,10 +1,7 @@
 'use strict';
 var Cesium = require('cesium');
 var CesiumMath = Cesium.Math;
-var defined = Cesium.defined;
-var Cartesian2 = Cesium.Cartesian2;
 var Cartesian3 = Cesium.Cartesian3;
-var Cartesian4 = Cesium.Cartesian4;
 
 var fs = require('fs');
 var path = require('path');
@@ -13,17 +10,37 @@ var loadGltfUris = require('../../lib/loadGltfUris');
 var addPipelineExtras = require('../../lib/addPipelineExtras');
 var bakeAmbientOcclusion = require('../../lib/bakeAmbientOcclusion');
 var readAccessor = require('../../lib/readAccessor');
+var Jimp = require('jimp');
 
 var boxGltfPath = './specs/data/boxTexturedUnoptimized/CesiumTexturedBoxTest.gltf';
 var boxOverGroundGltfPath = './specs/data/ambientOcclusion/cube_over_ground.gltf';
+
+function cloneGltfWithJimps(gltf) {
+    var gltfClone = clone(gltf);
+
+    // clone the jimps too
+    var originalJimp = gltf.extras._pipeline.jimpScratch;
+    gltfClone.extras._pipeline.jimpScratch = originalJimp.clone();
+    var images = gltfClone.images;
+    for (var imageID in images) {
+        if (images.hasOwnProperty(imageID)) {
+            var image = images[imageID];
+            originalJimp = gltf.images[imageID].extras._pipeline.jimpImage;
+            image.extras._pipeline.jimpImage = originalJimp.clone();
+        }
+    }
+
+    return gltfClone;
+}
 
 describe('bakeAmbientOcclusion', function() {
     var boxGltf;
     var boxOverGroundGltf;
 
     var loadGltfUriOptions = {
-        basePath: path.dirname(boxGltfPath)
-    }
+        basePath: path.dirname(boxGltfPath),
+        imageProcess: true
+    };
 
     var indices = [0,1,2,0,2,3];
     var indicesBuffer = new Buffer(indices.length * 2);
@@ -410,18 +427,134 @@ describe('bakeAmbientOcclusion', function() {
         expect(samples[2] > 6 && samples[2] < 10).toEqual(true); // randomized, but stratification should ensure this.
     });
 
-    it('generates new images, textures, and materials with a new sampler', function() {
-        var boxOverGroundGltfClone = clone(boxOverGroundGltf);
+    it('modifies existing images, textures, and materials in place', function() {
+        var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
+
         var options = {
-            numberSamples: 16,
+            numberSamples: 1,
             rayDepth: 1.0,
-            resolution: 16
+            resolution: 4
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
-        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(4);
-        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(4);
-        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(4);
-        expect(Object.keys(boxOverGroundGltfClone.samplers).length).toEqual(2);
-    })
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(2);
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(2);
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(2);
+    });
+
+    it('adds additional images as needed', function() {
+        var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
+
+        // remove some images
+        var imageID = 'Untitled';
+        var image = boxOverGroundGltfClone.images[imageID];
+        boxOverGroundGltfClone.images = {};
+        boxOverGroundGltfClone.images[imageID] = image;
+        var textures = boxOverGroundGltfClone.textures;
+        for (var textureID in textures) {
+            if (textures.hasOwnProperty(textureID)) {
+                var texture = textures[textureID];
+                texture.source = imageID;
+            }
+        }
+
+        var options = {
+            numberSamples: 1,
+            rayDepth: 1.0,
+            resolution: 4
+        };
+        bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
+
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(2);
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(2);
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(2);
+    });
+    
+    it('adds additional textures as needed', function() {
+        var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
+
+        // remove some textures
+        var textureID = 'texture_Untitled';
+        var texture = boxOverGroundGltfClone.textures[textureID];
+        boxOverGroundGltfClone.textures = {};
+        boxOverGroundGltfClone.textures[textureID] = texture;
+
+        var materials = boxOverGroundGltfClone.materials;
+        for (var materialID in materials) {
+            if (materials.hasOwnProperty(materialID)) {
+                materials[materialID].values.diffuse = textureID;
+            }
+        }
+
+        var options = {
+            numberSamples: 1,
+            rayDepth: 1.0,
+            resolution: 4
+        };
+        bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
+
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(3); // 1 unused image and 2 images with AO
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(2);
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(2);
+    });
+
+    it ('adds additional materials as needed', function() {
+        var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
+
+        // remove some materials
+        var materialID = 'Material-effect';
+        var material = boxOverGroundGltfClone.materials[materialID];
+        boxOverGroundGltfClone.materials = {};
+        boxOverGroundGltfClone.materials[materialID] = material;
+
+        var meshes = boxOverGroundGltfClone.meshes;
+        for (var meshID in meshes) {
+            if (meshes.hasOwnProperty(meshID)) {
+                var primitives = meshes[meshID].primitives;
+                for (var primitiveID in primitives) {
+                    if (primitives.hasOwnProperty(primitiveID)) {
+                        var primitive = primitives[primitiveID];
+                        primitive.material = materialID;
+                    }
+                }
+            }
+        }
+
+        var options = {
+            numberSamples: 1,
+            rayDepth: 1.0,
+            resolution: 4
+        };
+        bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
+
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(3); // 1 unused image and 2 with AO
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(3); // 1 unused texture, 2 with AO
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(2);
+    });
+
+    it ('can generate new images for materials that just have a diffuse color', function() {
+        var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
+
+        // remove some textures
+        var textureID = 'texture_Untitled';
+        var materials = boxOverGroundGltfClone.materials;
+        for (var materialID in materials) {
+            if (materials.hasOwnProperty(materialID)) {
+                if (materials[materialID].values.diffuse === textureID) {
+                    materials[materialID].values.diffuse = [1.0, 1.0, 1.0, 1.0];
+                }
+            }
+        }
+
+        var options = {
+            numberSamples: 1,
+            rayDepth: 1.0,
+            resolution: 4
+        };
+        bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
+
+        expect(Object.keys(boxOverGroundGltfClone.images).length).toEqual(3); // 1 unused image and 2 images with AO
+        expect(Object.keys(boxOverGroundGltfClone.textures).length).toEqual(3); // 1 unused texture, 2 with AO
+        expect(Object.keys(boxOverGroundGltfClone.materials).length).toEqual(3); // 1 unused material, 2 with AO
+    });
 });

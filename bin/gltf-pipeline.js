@@ -66,7 +66,8 @@ var options = {
     ao_scene : ao_scene,
     ao_rayDepth : ao_rayDepth,
     ao_resolution : ao_resolution,
-    ao_samples : ao_samples
+    ao_samples : ao_samples,
+    imageProcess : ao_diffuse
 };
 
 processFileToDisk(gltfPath, outputPath, options);

@@ -21,6 +21,10 @@ describe('bakeAmbientOcclusion', function() {
     var boxGltf;
     var boxOverGroundGltf;
 
+    var loadGltfUriOptions = {
+        basePath: path.dirname(boxGltfPath)
+    }
+
     var indices = [0,1,2,0,2,3];
     var indicesBuffer = new Buffer(indices.length * 2);
     for (var i = 0; i < indices.length; i++) {
@@ -180,7 +184,7 @@ describe('bakeAmbientOcclusion', function() {
             else {
                 boxGltf = JSON.parse(data);
                 addPipelineExtras(boxGltf);
-                loadGltfUris(boxGltf, path.dirname(boxGltfPath), function(err, gltf) {
+                loadGltfUris(boxGltf, loadGltfUriOptions, function(err, gltf) {
                     if (err) {
                         throw err;
                     }
@@ -196,7 +200,7 @@ describe('bakeAmbientOcclusion', function() {
             else {
                 boxOverGroundGltf = JSON.parse(data);
                 addPipelineExtras(boxOverGroundGltf);
-                loadGltfUris(boxOverGroundGltf, path.dirname(boxGltfPath), function(err, gltf) {
+                loadGltfUris(boxOverGroundGltf, loadGltfUriOptions, function(err, gltf) {
                     if (err) {
                         throw err;
                     }

@@ -1,8 +1,7 @@
 'use strict';
 var Cesium = require('cesium');
-var CesiumMath = Cesium.Math;
-var AxisAlignedBoundingBox = Cesium.AxisAlignedBoundingBox;
 var Cartesian3 = Cesium.Cartesian3;
+var CesiumMath = Cesium.Math;
 var StaticUniformGrid = require('../../lib/StaticUniformGrid');
 
 describe('StaticUniformGrid', function() {

@@ -1,10 +1,8 @@
 'use strict';
 var Cesium = require('cesium');
 var CesiumMath = Cesium.Math;
-var Cartesian2 = Cesium.Cartesian2;
 var Cartesian3 = Cesium.Cartesian3;
 var Matrix4 = Cesium.Matrix4;
-var Quaternion = Cesium.Quaternion;
 var bakeAmbientOcclusion = require('../../lib/bakeAmbientOcclusion');
 var clone = require('clone');
 var NodeHelpers = require('../../lib/NodeHelpers');
@@ -236,8 +234,8 @@ describe('bakeAmbientOcclusion', function() {
     it('correctly processes a basic 2-triangle square primitive', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
-            rayDepth : 0.1,
-            resolution : 10
+            resolution : 10,
+            toTexture : true
         };
         var raytracerScene = bakeAmbientOcclusion.generateRaytracerScene(testGltf, scene, options);
         var triangleSoup = raytracerScene.triangleSoup;
@@ -272,10 +270,9 @@ describe('bakeAmbientOcclusion', function() {
     it('correctly generates a ground plane just below the minimum of the scene.', function() {
         var scene = testGltf.scenes[testGltf.scene];
         var options = {
-            rayDepth : 1.0,
+            rayDistance : 1.0,
             groundPlane : true,
-            nearCull : CesiumMath.EPSILON4,
-            toVertex : true
+            nearCull : CesiumMath.EPSILON4
         };
         var raytracerScene = bakeAmbientOcclusion.generateRaytracerScene(testGltf, scene, options);
         var triangleSoup = raytracerScene.triangleSoup;
@@ -371,9 +368,9 @@ describe('bakeAmbientOcclusion', function() {
         var boxOverGroundGltfClone = cloneGltfWithJimps(boxOverGroundGltf);
 
         var options = {
-            numberSamples: 0,
-            rayDepth: 1.0,
-            resolution: 4
+            numberRays: 0,
+            resolution: 4,
+            toTexture: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
@@ -399,10 +396,9 @@ describe('bakeAmbientOcclusion', function() {
         }
 
         var options = {
-            runAO: true,
-            numberSamples: 0,
-            rayDepth: 1.0,
-            resolution: 4
+            numberRays: 0,
+            resolution: 4,
+            toTexture: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
@@ -428,10 +424,9 @@ describe('bakeAmbientOcclusion', function() {
         }
 
         var options = {
-            runAO: true,
-            numberSamples: 0,
-            rayDepth: 1.0,
-            resolution: 4
+            numberRays: 0,
+            resolution: 4,
+            toTexture: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
@@ -459,10 +454,9 @@ describe('bakeAmbientOcclusion', function() {
         NodeHelpers.forEachPrimitiveInScene(boxOverGroundGltfClone, scene, primitiveFunction);
 
         var options = {
-            runAO: true,
-            numberSamples: 0,
-            rayDepth: 1.0,
-            resolution: 4
+            numberRays: 0,
+            resolution: 4,
+            toTexture: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
@@ -486,10 +480,9 @@ describe('bakeAmbientOcclusion', function() {
         }
 
         var options = {
-            runAO: true,
-            numberSamples: 0,
-            rayDepth: 1.0,
-            resolution: 4
+            numberRays: 0,
+            resolution: 4,
+            toTexture: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
@@ -502,15 +495,14 @@ describe('bakeAmbientOcclusion', function() {
         var boxOverGroundGltfClone = clone(boxOverGroundGltf);
 
         var options = {
-            numberSamples: 0,
-            rayDepth: 1.0,
+            numberRays: 0,
             toVertex: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
 
         expect(Object.keys(boxOverGroundGltfClone.accessors).length).toEqual(10);
         var cubeMeshPrimitives = boxOverGroundGltfClone.meshes.Cube_mesh.primitives;
-        expect(cubeMeshPrimitives[0].attributes.VERTEX_AO).toEqual('accessor_Cube_mesh_0_AO');
+        expect(cubeMeshPrimitives[0].attributes._OCCLUSION).toEqual('accessor_Cube_mesh_0_AO');
 
         expect(boxOverGroundGltfClone.buffers.aoBuffer).toBeDefined();
         expect(boxOverGroundGltfClone.bufferViews.aoBufferView).toBeDefined();
@@ -521,8 +513,7 @@ describe('bakeAmbientOcclusion', function() {
         var boxOverGroundGltfClone = clone(boxOverGroundGltf);
 
         var options = {
-            numberSamples: 0,
-            rayDepth: 1.0,
+            numberRays: 0,
             toVertex: true
         };
         bakeAmbientOcclusion.bakeAmbientOcclusion(boxOverGroundGltfClone, options);
@@ -542,42 +533,6 @@ describe('bakeAmbientOcclusion', function() {
         expect(unusedPrimitives[3].material).toEqual('useless-material');
     });
 
-    it('can flatten triangles into their own planes', function() {
-        var positions = [
-            new Cartesian3(0, 0, 0),
-            new Cartesian3(1, 0, 0),
-            new Cartesian3(1, 1, 0)
-        ];
-
-        // Transform the triangle to be unrecognizable but not scaled
-        var rotation = new Quaternion(1.1, 0.2, 0.3, 2.0); // some rotation
-        rotation = Quaternion.normalize(rotation, rotation);
-        var translation = new Cartesian3(1.0, 2.0, 3.0);
-        var scale = new Cartesian3(1.0, 1.0, 1.0);
-        var transform = Matrix4.fromTranslationQuaternionRotationScale(translation, rotation, scale, new Matrix4());
-
-        positions[0] = Matrix4.multiplyByPoint(transform, positions[0], positions[0]);
-        positions[1] = Matrix4.multiplyByPoint(transform, positions[1], positions[1]);
-        positions[2] = Matrix4.multiplyByPoint(transform, positions[2], positions[2]);
-
-        var results = [
-            new Cartesian2(),
-            new Cartesian2(),
-            new Cartesian2()
-        ];
-        var expected = [
-            new Cartesian2(0.0, 0.0),
-            new Cartesian2(1.0, 0.0),
-            new Cartesian2(1.0, 1.0)
-        ];
-
-        bakeAmbientOcclusion.flattenTriangle(positions, results);
-
-        expect(Cartesian2.equalsEpsilon(results[0], expected[0], CesiumMath.EPSILON7)).toEqual(true);
-        expect(Cartesian2.equalsEpsilon(results[1], expected[1], CesiumMath.EPSILON7)).toEqual(true);
-        expect(Cartesian2.equalsEpsilon(results[2], expected[2], CesiumMath.EPSILON7)).toEqual(true);
-    });
-
     it('it can sample occlusion just at a triangle center', function() {
         var aoBuffer = {
             samples: new Array(3).fill(0.0),
@@ -591,9 +546,9 @@ describe('bakeAmbientOcclusion', function() {
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
                 triangleSoup : tetrahedron,
-                numberSamples : 16,
+                numberRays : 16,
                 nearCull : CesiumMath.EPSILON4,
-                rayDepth : 1.0
+                rayDistance : 1.0
             }
         };
 
@@ -639,11 +594,11 @@ describe('bakeAmbientOcclusion', function() {
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
                 triangleSoup : tetrahedron,
-                numberSamples : 4,
+                numberRays : 4,
                 nearCull : CesiumMath.EPSILON4,
-                rayDepth : 1.0
+                rayDistance : 1.0
             },
-            resolution : 4
+            density : 4
         };
 
         var node = {
@@ -674,5 +629,73 @@ describe('bakeAmbientOcclusion', function() {
         expect(CesiumMath.equalsEpsilon(samples[0], counts[0], CesiumMath.EPSILON7)).toEqual(false);
         expect(CesiumMath.equalsEpsilon(samples[1], counts[1], CesiumMath.EPSILON7)).toEqual(false);
         expect(CesiumMath.equalsEpsilon(samples[2], counts[2], CesiumMath.EPSILON7)).toEqual(false);
+    });
+
+    it ('generates options given nothing or just a quality setting', function() {
+        var options = bakeAmbientOcclusion.generateOptions(boxOverGroundGltf);
+        expect(options.toTexture).toEqual(false);
+        expect(options.groundPlane).toEqual(false);
+        expect(options.ambientShadowContribution).toEqual(0.5);
+        expect(options.density).toEqual(1.0);
+        expect(options.resolution).toEqual(128);
+        expect(options.numberRays).toEqual(16);
+        expect(options.triangleCenterOnly).toEqual(false);
+        expect(options.rayDistance).toEqual(1.0);
+        expect(options.nearCull).toEqual(0.0001);
+        expect(options.shaderMode).toEqual('blend');
+        expect(options.sceneID).toEqual('defaultScene');
+
+        var aoOptions = {
+            quality: 'medium'
+        };
+        options = bakeAmbientOcclusion.generateOptions(boxOverGroundGltf, aoOptions);
+        expect(options.toTexture).toEqual(false);
+        expect(options.groundPlane).toEqual(false);
+        expect(options.ambientShadowContribution).toEqual(0.5);
+        expect(options.density).toEqual(2.0);
+        expect(options.resolution).toEqual(256);
+        expect(options.numberRays).toEqual(36);
+        expect(options.triangleCenterOnly).toEqual(false);
+        expect(options.rayDistance).toEqual(1.0);
+        expect(options.nearCull).toEqual(0.0001);
+        expect(options.shaderMode).toEqual('blend');
+        expect(options.sceneID).toEqual('defaultScene');
+
+        aoOptions = {
+            quality: 'high'
+        };
+        options = bakeAmbientOcclusion.generateOptions(boxOverGroundGltf, aoOptions);
+        expect(options.toTexture).toEqual(false);
+        expect(options.groundPlane).toEqual(false);
+        expect(options.ambientShadowContribution).toEqual(0.5);
+        expect(options.density).toEqual(4.0);
+        expect(options.resolution).toEqual(512);
+        expect(options.numberRays).toEqual(64);
+        expect(options.triangleCenterOnly).toEqual(false);
+        expect(options.rayDistance).toEqual(1.0);
+        expect(options.nearCull).toEqual(0.0001);
+        expect(options.shaderMode).toEqual('blend');
+        expect(options.sceneID).toEqual('defaultScene');
+    });
+
+    it ('overwrites parameters in base options when advanced settings are specified', function() {
+        var aoOptions = {
+            quality: 'medium',
+            toTexture: true,
+            triangleCenterOnly: true,
+            rayDistance: 10.0
+        };
+        var options = bakeAmbientOcclusion.generateOptions(boxOverGroundGltf, aoOptions);
+        expect(options.toTexture).toEqual(true);
+        expect(options.groundPlane).toEqual(false);
+        expect(options.ambientShadowContribution).toEqual(0.5);
+        expect(options.density).toEqual(2.0);
+        expect(options.resolution).toEqual(256);
+        expect(options.numberRays).toEqual(36);
+        expect(options.triangleCenterOnly).toEqual(true);
+        expect(options.rayDistance).toEqual(10.0);
+        expect(options.nearCull).toEqual(0.0001);
+        expect(options.shaderMode).toEqual('blend');
+        expect(options.sceneID).toEqual('defaultScene');
     });
 });

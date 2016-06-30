@@ -1,4 +1,5 @@
 'use strict';
+var buildTriangleStaticUniformGrid = require('../../lib/buildTriangleStaticUniformGrid');
 var Cesium = require('cesium');
 var CesiumMath = Cesium.Math;
 var Cartesian3 = Cesium.Cartesian3;
@@ -318,11 +319,13 @@ describe('bakeAmbientOcclusion', function() {
             });
         }
 
+        var grid = buildTriangleStaticUniformGrid(tetrahedron, 10.0);
+
         for (i = 0; i < 6; i++) {
             var texel = texelPoints[i];
             samples[i] = bakeAmbientOcclusion.computeAmbientOcclusionAt(
                 texel.position, texel.normal, 16, 4,
-                tetrahedron, 0.001, 10.0);
+                grid, 0.001, 10.0);
         }
 
         for (i = 0; i < 6; i++) {
@@ -352,11 +355,13 @@ describe('bakeAmbientOcclusion', function() {
             }
         ];
 
+        var grid = buildTriangleStaticUniformGrid(tetrahedron, 10.0);
+
         for (var i = 0; i < 3; i++) {
             var texel = texelPoints[i];
             samples[i] += bakeAmbientOcclusion.computeAmbientOcclusionAt(
                 texel.position, texel.normal, 16, 4,
-                openTetrahedron, 0.001, 10.0);
+                grid, 0.001, 10.0);
         }
 
         expect(samples[0]).toEqual(16);
@@ -539,13 +544,15 @@ describe('bakeAmbientOcclusion', function() {
             count: new Array(3).fill(CesiumMath.EPSILON10)
         };
 
+        var grid = buildTriangleStaticUniformGrid(tetrahedron, 1.0);
+
         var parameters = {
             raytracerScene : {
                 aoBufferByPrimitive : {
                     meshPrimitiveID : aoBuffer
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
-                triangleSoup : tetrahedron,
+                triangleSoup : grid,
                 numberRays : 16,
                 nearCull : CesiumMath.EPSILON4,
                 rayDistance : 1.0
@@ -587,13 +594,15 @@ describe('bakeAmbientOcclusion', function() {
             count: new Array(3).fill(CesiumMath.EPSILON10)
         };
 
+        var grid = buildTriangleStaticUniformGrid(tetrahedron, 1.0);
+
         var parameters = {
             raytracerScene : {
                 aoBufferByPrimitive : {
                     meshPrimitiveID : aoBuffer
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
-                triangleSoup : tetrahedron,
+                triangleSoup : grid,
                 numberRays : 4,
                 nearCull : CesiumMath.EPSILON4,
                 rayDistance : 1.0

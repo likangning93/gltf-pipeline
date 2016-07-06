@@ -1,5 +1,5 @@
 'use strict';
-var buildTriangleStaticUniformGrid = require('../../lib/buildTriangleStaticUniformGrid');
+var StaticUniformGrid = require('../../lib/StaticUniformGrid');
 var Cesium = require('cesium');
 var CesiumMath = Cesium.Math;
 var Cartesian3 = Cesium.Cartesian3;
@@ -319,7 +319,7 @@ describe('bakeAmbientOcclusion', function() {
             });
         }
 
-        var grid = buildTriangleStaticUniformGrid(tetrahedron, 10.0);
+        var grid = StaticUniformGrid.fromTriangleSoup(tetrahedron, 10.0);
 
         for (i = 0; i < 6; i++) {
             var texel = texelPoints[i];
@@ -355,7 +355,7 @@ describe('bakeAmbientOcclusion', function() {
             }
         ];
 
-        var grid = buildTriangleStaticUniformGrid(tetrahedron, 10.0);
+        var grid = StaticUniformGrid.fromTriangleSoup(tetrahedron, 10.0);
 
         for (var i = 0; i < 3; i++) {
             var texel = texelPoints[i];
@@ -544,7 +544,7 @@ describe('bakeAmbientOcclusion', function() {
             count: new Array(3).fill(CesiumMath.EPSILON10)
         };
 
-        var grid = buildTriangleStaticUniformGrid(tetrahedron, 1.0);
+        var grid = StaticUniformGrid.fromTriangleSoup(tetrahedron, 1.0);
 
         var parameters = {
             raytracerScene : {
@@ -594,7 +594,7 @@ describe('bakeAmbientOcclusion', function() {
             count: new Array(3).fill(CesiumMath.EPSILON10)
         };
 
-        var grid = buildTriangleStaticUniformGrid(tetrahedron, 1.0);
+        var grid = StaticUniformGrid.fromTriangleSoup(tetrahedron, 1.0);
 
         var parameters = {
             raytracerScene : {

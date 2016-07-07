@@ -201,6 +201,10 @@ describe('StaticUniformGrid', function() {
         expect(fastNeighbors).toEqual(naiveNeighbors);
     });
 
+    it('runs functions on objects in the quadrant of a position', function() {
+        
+    });
+
     it('builds a grid containing triangles, which are lists of Cartesian3s', function() {
         var grid = StaticUniformGrid.fromTriangleSoup(manyTriangles, 1.0);
 

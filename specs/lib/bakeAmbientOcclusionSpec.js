@@ -552,7 +552,7 @@ describe('bakeAmbientOcclusion', function() {
                     meshPrimitiveID : aoBuffer
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
-                triangleSoup : grid,
+                grid : grid,
                 numberRays : 16,
                 nearCull : CesiumMath.EPSILON4,
                 rayDistance : 1.0
@@ -602,7 +602,7 @@ describe('bakeAmbientOcclusion', function() {
                     meshPrimitiveID : aoBuffer
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
-                triangleSoup : grid,
+                grid : grid,
                 numberRays : 4,
                 nearCull : CesiumMath.EPSILON4,
                 rayDistance : 1.0

@@ -201,7 +201,7 @@ describe('StaticUniformGrid', function() {
         expect(fastNeighbors).toEqual(naiveNeighbors);
     });
 
-    fit('runs functions on objects in the quadrant of a direction', function() {
+    it('runs functions on objects in the quadrant of a direction', function() {
         var pointData = [];
         for (var x = 0; x < 5; x++) {
             for (var y = 0; y < 5; y++) {

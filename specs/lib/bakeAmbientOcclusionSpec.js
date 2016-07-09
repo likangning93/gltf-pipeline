@@ -325,7 +325,7 @@ describe('bakeAmbientOcclusion', function() {
             var texel = texelPoints[i];
             samples[i] = bakeAmbientOcclusion.computeAmbientOcclusionAt(
                 texel.position, texel.normal, 16, 4,
-                grid, 0.001, 10.0);
+                tetrahedron, grid, 0.001, 10.0);
         }
 
         for (i = 0; i < 6; i++) {
@@ -361,7 +361,7 @@ describe('bakeAmbientOcclusion', function() {
             var texel = texelPoints[i];
             samples[i] += bakeAmbientOcclusion.computeAmbientOcclusionAt(
                 texel.position, texel.normal, 16, 4,
-                grid, 0.001, 10.0);
+                tetrahedron, grid, 0.001, 10.0);
         }
 
         expect(samples[0]).toEqual(16);
@@ -553,6 +553,7 @@ describe('bakeAmbientOcclusion', function() {
                 },
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
                 grid : grid,
+                triangleSoup : tetrahedron,
                 numberRays : 16,
                 nearCull : CesiumMath.EPSILON4,
                 rayDistance : 1.0
@@ -601,6 +602,7 @@ describe('bakeAmbientOcclusion', function() {
                 aoBufferByPrimitive : {
                     meshPrimitiveID : aoBuffer
                 },
+                triangleSoup : tetrahedron,
                 bufferDataByAccessor : equilateralBufferDataByAccessor,
                 grid : grid,
                 numberRays : 4,
